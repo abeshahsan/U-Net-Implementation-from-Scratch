@@ -6,8 +6,6 @@
 
 - [Semantic Segmentation for Self-Driving Cars from Kaggle](https://www.kaggle.com/datasets/kumaresanmanickavelu/lyft-udacity-challenge) -- for 13 classes
 
-
-
 ## Pre-trained weights (10 epochs)
 
 Download the weights and put them in the root folder. Also change the name of the files in the code, based on which dataset you are using.
