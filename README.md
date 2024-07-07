@@ -2,9 +2,11 @@
 
 ## Dataset
 
-- [Carvana Dataset From Kaggle](https://www.kaggle.com/c/carvana-image-masking-challenge)
+- [Carvana Dataset From Kaggle](https://www.kaggle.com/c/carvana-image-masking-challenge) -- for 2 classes
 
-- [Semantic Segmentation for Self-Driving Cars from Kaggle](https://www.kaggle.com/datasets/kumaresanmanickavelu/lyft-udacity-challenge)
+- [Semantic Segmentation for Self-Driving Cars from Kaggle](https://www.kaggle.com/datasets/kumaresanmanickavelu/lyft-udacity-challenge) -- for 13 classes
+
+
 
 ## Pre-trained weights (10 epochs)
 
