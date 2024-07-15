@@ -4,50 +4,72 @@ from torch.utils.data import Dataset
 from PIL import Image
 import os
 import numpy as np
-from utils import cityscapes_labels_map
+
 
 class UnetDataSet(Dataset):
     def __init__(self, image_dir, mask_dir, transform=None):
         self.image_paths = []
         self.mask_paths = []
         self.transform = transform
-        
-        if type(image_dir) == str:
+
+        if isinstance(image_dir, str):
             image_dir = [image_dir]
-        if type(mask_dir) == str:
+        if isinstance(mask_dir, str):
             mask_dir = [mask_dir]
 
         for i in range(len(image_dir)):
-            assert os.path.exists(image_dir[i]), f"Image directory {image_dir[i]} does not exist"
-        
+            assert os.path.exists(image_dir[i]), \
+                f"Image directory {image_dir[i]} does not exist"
+
         for i in range(len(mask_dir)):
-            assert os.path.exists(mask_dir[i]), f"Target directory {mask_dir[i]} does not exist"
+            assert os.path.exists(mask_dir[i]), \
+                f"Target directory {mask_dir[i]} does not exist"
 
         for i in range(len(image_dir)):
-            assert len(os.listdir(image_dir[i])) == len(os.listdir(mask_dir[i])), f"Number of images and targets should be same for {image_dir[i]} and {mask_dir[i]}"
-        
-        for i in range(len(image_dir)):
-            self.image_paths.extend([os.path.join(image_dir[i], image_path) for image_path in os.listdir(image_dir[i])])
-            self.mask_paths.extend([os.path.join(mask_dir[i], mask_path) for mask_path in os.listdir(mask_dir[i])])
+            len_of_images = len(os.listdir(image_dir[i]))
+            len_of_masks = len(os.listdir(mask_dir[i]))
 
-        
+            assert len_of_images == len_of_masks, (
+                "Number of images and targets should be same for "
+                f"{image_dir[i]} and {mask_dir[i]}"
+            )
+
+        for i in range(len(image_dir)):
+            self.image_paths.extend(
+                [
+                    os.path.join(image_dir[i], image_path)
+                    for image_path in os.listdir(image_dir[i])
+                ]
+            )
+            self.mask_paths.extend(
+                [
+                    os.path.join(mask_dir[i], mask_path)
+                    for mask_path in os.listdir(mask_dir[i])
+                ]
+            )
+
     def __len__(self):
         return len(self.image_paths)
 
     def __getitem__(self, idx):
         image = np.array(Image.open(self.image_paths[idx]).convert("RGB"))
-        mask = np.array(Image.open(self.mask_paths[idx]).convert("L"), dtype=np.float32)
-        
+        mask = np.array(Image.open(self.mask_paths[idx])
+                        .convert("L"), dtype=np.float32)
+
         if self.transform:
             transformation = self.transform(image=image, mask=mask)
             image = transformation["image"]
             mask = transformation["mask"]
-        
+
+        image /= 255.0
+
         return image, mask
 
-# The `CityScapesDataset` class is designed to load and process images from a specified directory for
-# a computer vision dataset, splitting each image into left and right halves.
+
 class CityScapesDataset(Dataset):
+    """
+        A dataset class for the CityScapes dataset.
+    """
 
     def __init__(self, data_dir, transform=None):
         """
@@ -59,7 +81,7 @@ class CityScapesDataset(Dataset):
             The path to the directory containing the images.
             `transform` : albumentations.Compose
             A composition of image transformations to apply to each image
-            
+
         Returns:
         --------
         None
@@ -68,9 +90,7 @@ class CityScapesDataset(Dataset):
         self.image_dir = data_dir
         self.transform = transform
         self.image_paths = os.listdir(data_dir)
-        
-        # assert len(self.images) == len(self.targets), "Number of images and targets should be same"
-    
+
     def __len__(self):
         """
         Get the number of images in the dataset.
@@ -92,7 +112,7 @@ class CityScapesDataset(Dataset):
             The image.
         """
         image_path = os.path.join(self.image_dir, self.image_paths[idx])
-        
+
         image = Image.open(image_path).convert("RGB")
 
         image, target = self.__split_image__(image)
@@ -105,9 +125,9 @@ class CityScapesDataset(Dataset):
             transformation = self.transform(image=image, mask=target)
             image = transformation["image"]
             target = transformation["mask"]
-        
+
         return image, target
-    
+
     def __split_image__(self, image: PIL.Image):
         """
         Split an image into left and right halves.
@@ -116,7 +136,7 @@ class CityScapesDataset(Dataset):
         ----------
         `image` : PIL.Image
             The image to split.
-        
+
         Returns:
         --------
         `left_image` : PIL.Image
@@ -124,7 +144,7 @@ class CityScapesDataset(Dataset):
         `right_image` : PIL.Image
             The right half of the image.
         """
-        width, height = image.size # Get the width and height of the image
+        width, height = image.size  # Get the width and height of the image
 
         # Calculate the middle of the image
         middle = width // 2
