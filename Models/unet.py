@@ -55,10 +55,10 @@ class UpSampleBlock(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, out_channels):
         super(UNet, self).__init__()
 
-        self.down_block1 = DownSampleBlock(in_channels, 64)
+        self.down_block1 = DownSampleBlock(3, 64)
         self.down_block2 = DownSampleBlock(64, 128)
         self.down_block3 = DownSampleBlock(128, 256)
         self.down_block4 = DownSampleBlock(256, 512)
