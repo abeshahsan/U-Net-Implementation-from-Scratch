@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import warnings
 
+from Training.history import History
+
 
 def plot_images(images: list | np.ndarray,
                 plot_labels: list | np.ndarray = None,
@@ -78,4 +80,13 @@ def plot_images(images: list | np.ndarray,
             ax.set_title(plot_labels[i])
 
     plt.tight_layout()
-    plt.show()
+
+
+def plot_history(history: History = None, train = True, val = False):
+    if train and history.train_losses is not None:
+        plt.plt(history.train_losses, color = "blue")
+
+    if val and history.val_losses is not None:
+        plt.plt(history.train_losses, color = "green")
+
+    return plt.figure()

@@ -17,7 +17,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class AtrouSeparableConvolution(nn.Module):
+class AtrouSeparableConv2D(nn.Module):
     """
     Atrous Separable Convolution
 
@@ -40,27 +40,24 @@ class AtrouSeparableConvolution(nn.Module):
         The Final output after applying the separable convolution
 
     """
-    def __init__(self, in_channels, out_channels, kernel_size, padding, dilation):
-        super(AtrouSeparableConvolution, self).__init__()
+    def __init__(self, in_channels, out_channels, kernel_size, padding = 0, dilation = 1, stride = 1):
+        super(AtrouSeparableConv2D, self).__init__()
         self.m_separable_conv = nn.Conv2d(in_channels,
                                           in_channels, kernel_size,
                                           padding=padding,
                                           dilation=dilation,
-                                          groups=in_channels)
+                                          groups=in_channels, stride=stride)
         self.m_pointwise_conv = nn.Conv2d(in_channels, out_channels, 1)
         self.m_batch_norm = nn.BatchNorm2d(out_channels)
         self.m_relu = nn.ReLU()
-        self.m_dropout = nn.Dropout(p=0.1)  # You can adjust the dropout probability
 
-    def forward(self, input):
-        separable_conv = self.m_separable_conv(input)
-        pointwise_conv = self.m_pointwise_conv(separable_conv)
-        normalized = self.m_batch_norm(pointwise_conv)
-        activated = self.m_relu(normalized)
-        dropped_out = self.m_dropout(activated)
+    def forward(self, x):
+        x = self.m_separable_conv(x)
+        x = self.m_pointwise_conv(x)
+        x = self.m_batch_norm(x)
+        x = self.m_relu(x)
 
-        output = dropped_out
-        return output
+        return x
 
 
 class ASPP_Conv(nn.Module):
@@ -94,13 +91,12 @@ class ASPP_Conv(nn.Module):
         self.m_batch_norm = nn.BatchNorm2d(out_channels)
         self.m_relu = nn.ReLU()
 
-    def forward(self, input):
-        conv = self.m_conv(input)
-        normalized = self.m_batch_norm(conv)
-        activated = self.m_relu(normalized)
+    def forward(self, x):
+        x = self.m_conv(x)
+        x = self.m_batch_norm(x)
+        x = self.m_relu(x)
 
-        output = activated
-        return output
+        return x
 
 
 class ASPPPooling(nn.Module):
@@ -128,7 +124,8 @@ class ASPPPooling(nn.Module):
 
         """
         super(ASPPPooling, self).__init__()
-        self.m_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.m_pool = nn.AvgPool2d(kernel_size=(2, 2))
+
         self.m_conv = nn.Conv2d(in_channels,
                                 out_channels, kernel_size,
                                 padding=padding,

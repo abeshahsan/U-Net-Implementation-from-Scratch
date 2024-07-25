@@ -35,12 +35,12 @@ def get_train_transforms(image_height, image_width):
             A.Normalize(
                 mean=[0.0, 0.0, 0.0],
                 std=[1.0, 1.0, 1.0],
-                max_pixel_value=255.0,
+                max_pixel_value=1.0,
             ),
-            A.HorizontalFlip(p=0.5),
-            A.VerticalFlip(p=0.5),
-            A.ShiftScaleRotate(p=0.5),
-            A.RandomResizedCrop(height=image_height, width=image_width, scale=(0.5, 2.0)),
+            # A.HorizontalFlip(p=0.2),
+            # A.VerticalFlip(p=0.2),
+            # A.ShiftScaleRotate(p=0.1),
+            # A.RandomResizedCrop(height=image_height, width=image_width, scale=(0.25, 1.25)),
             ToTensorV2(),
         ]
     )

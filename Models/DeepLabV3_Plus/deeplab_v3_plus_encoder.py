@@ -29,6 +29,8 @@ import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
 from torch.nn import init
 
+from .ASPP_Module import AtrouSeparableConv2D
+
 __all__ = ['xception']
 
 pretrained_settings = {
@@ -135,7 +137,7 @@ class Xception(nn.Module):
 
         self.block1=Block(64,128,2,2,start_with_relu=False,grow_first=True)
         self.block2=Block(128,256,2,2,start_with_relu=True,grow_first=True)
-        self.block3=Block(256,728,2,2,start_with_relu=True,grow_first=True)
+        self.block3=Block(256,728,2,1,start_with_relu=True,grow_first=True)
 
         self.block4=Block(728,728,3,1,start_with_relu=True,grow_first=True)
         self.block5=Block(728,728,3,1,start_with_relu=True,grow_first=True)
@@ -179,24 +181,28 @@ class Xception(nn.Module):
         x = self.relu2(x)
 
         x = self.block1(x)
+
         x = self.block2(x)
+        # print(self.low_level_features[-1].shape, x.shape)
+
         x = self.block3(x)
+
         x = self.block4(x)
+
         x = self.block5(x)
+
         x = self.block6(x)
         x = self.block7(x)
         x = self.block8(x)
-        x = self.block9(x)
-        x = self.block10(x)
-        x = self.block11(x)
-        x = self.block12(x)
+        # x = self.block9(x)
+        # x = self.block10(x)
+        # x = self.block11(x)
+        # x = self.block12(x)
 
-        x = self.conv3(x)
-        x = self.bn3(x)
-        x = self.relu3(x)
+        # x = self.conv3(x)
+        # x = self.bn3(x)
+        # x = self.relu3(x)
 
-        x = self.conv4(x)
-        x = self.bn4(x)
         return x
 
     def logits(self, features):
@@ -220,6 +226,10 @@ def xception(pretrained='imagenet', device='cpu'):
         settings = pretrained_settings['xception'][pretrained]
 
         model = Xception()
+
+        for parameter in model.parameters():
+            parameter.requires_grad = False
+
         state = torch.load('../Checkpoints/xception-43020ad28.pth')
         model.load_state_dict(state)
 
@@ -229,5 +239,62 @@ def xception(pretrained='imagenet', device='cpu'):
         model.mean = settings['mean']
         model.std = settings['std']
 
-    model = model.to(device)
     return model
+
+
+from Config.config_deeplab_v3_plus import BACKBONE_CHANNEL_SIZE
+
+class Xception_Block(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(Xception_Block, self).__init__()
+
+        self.m_pointwise_conv = nn.Conv2d(in_channels, out_channels, 1)
+
+        # make it divisible by 4
+        # closest greater one
+        out_channels = (out_channels + 3) // 4
+        out_channels *= 4
+
+        channel_groups = out_channels // 4
+        self.channel_groups = channel_groups
+
+        self.m_asconv_list = [
+            AtrouSeparableConv2D(channel_groups, channel_groups, 3, padding=3, dilation=3),
+            AtrouSeparableConv2D(channel_groups, channel_groups, 3, padding=6, dilation=6),
+            AtrouSeparableConv2D(channel_groups, channel_groups, 3, padding=12, dilation=12),
+            AtrouSeparableConv2D(channel_groups, channel_groups, 3, padding=18, dilation=18)
+        ]
+
+    def forward(self, input):
+        x = self.m_pointwise_conv(input)
+
+        asconv_outs = []
+        for idx, asconv in enumerate(self.m_asconv_list):
+            asconv_outs.append(asconv(x[:, idx * self.channel_groups:(idx + 1) * self.channel_groups, :, :]))
+
+        cat = torch.cat(asconv_outs, dim=1)
+        del asconv
+        return cat
+
+class DeepLabV3_Plus_Encoder(nn.Module):
+    def __init__(self):
+        super(DeepLabV3_Plus_Encoder, self).__init__()
+
+        self.m_block_list = nn.Sequential(
+            Xception_Block(3, BACKBONE_CHANNEL_SIZE),
+            # Xception_Block(256, 256),
+            # Xception_Block(256, 256),
+            # Xception_Block(256, 256)
+        )
+
+
+    def forward(self, input):
+        block_outs = self.m_block_list(input)
+        return block_outs
+
+
+if __name__ == "__main__":
+
+    x = torch.randn([1, 3, 128, 128])
+    encoder = DeepLabV3_Plus_Encoder().to('cuda')
+    print(encoder(x).shape)

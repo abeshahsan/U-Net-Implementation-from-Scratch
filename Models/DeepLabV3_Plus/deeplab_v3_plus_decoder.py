@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from Config.config_deeplab_v3_plus import IMAGE_SIZE
+from Config.config_deeplab_v3_plus import BACKBONE_CHANNEL_SIZE
 
 class Decoder(nn.Module):
     def __init__(self, n_classes):
@@ -28,13 +29,13 @@ class Decoder(nn.Module):
         """
         super(Decoder, self).__init__()
 
+        self.point_conv_backbone = nn.Conv2d(BACKBONE_CHANNEL_SIZE, 48, 3, padding=1)
         self.m_conv2 = nn.Conv2d(304, 256, 3, padding=1)
         self.m_conv3 = nn.Conv2d(256, 256, 3, padding=1)
         self.m_conv4 = nn.Conv2d(256, n_classes, 1)
 
 
     def forward(self, x, low_level_features):
-        device = x.device
         """
         Forward pass of the DeepLabV3_Plus_Decoder module.
 
@@ -53,12 +54,13 @@ class Decoder(nn.Module):
         """
 
         # 1x1 Convolution for backbone features
-        low_level_features = nn.Conv2d(low_level_features.shape[1], 48, 1).to(device)(low_level_features)
+
+        low_level_features = self.point_conv_backbone(low_level_features)
         x = F.interpolate(x, size=low_level_features.size()[2:], mode='bilinear', align_corners=True)
         x = torch.cat((x, low_level_features), dim=1)
         x = self.m_conv2(x)
+        x = F.interpolate(x, size=IMAGE_SIZE, mode='bilinear', align_corners=True)
         x = self.m_conv3(x)
-        x = F.interpolate(x, size=x.size()[2:], mode='bilinear', align_corners=True)
         x = self.m_conv4(x)
 
         return x

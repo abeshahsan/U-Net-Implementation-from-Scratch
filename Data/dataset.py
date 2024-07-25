@@ -61,8 +61,6 @@ class UnetDataSet(Dataset):
             image = transformation["image"]
             mask = transformation["mask"]
 
-        image /= 255.0
-
         return image, mask
 
 
