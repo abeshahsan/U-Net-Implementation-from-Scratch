@@ -6,7 +6,7 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
 
-def get_train_transforms(image_height, image_width):
+def get_train_transforms(image_height, image_width, encoding=None):
     """
     Returns the train and validation transforms for the dataset
 
@@ -74,7 +74,7 @@ def get_val_transforms(image_height, image_width):
             A.Normalize(
                 mean=[0.0, 0.0, 0.0],
                 std=[1.0, 1.0, 1.0],
-                max_pixel_value=255.0,
+                max_pixel_value=1.0,
             ),
             ToTensorV2(),
         ]

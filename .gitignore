@@ -9,3 +9,5 @@ COCO_loader.ipynb
 **/*.terabox.uploading.cfg
 **/*.pth
 **/*.pth2.tar
+
+Checkpoints/

@@ -53,8 +53,7 @@ class UnetDataSet(Dataset):
 
     def __getitem__(self, idx):
         image = np.array(Image.open(self.image_paths[idx]).convert("RGB"))
-        mask = np.array(Image.open(self.mask_paths[idx])
-                        .convert("L"), dtype=np.float32)
+        mask = np.array(Image.open(self.mask_paths[idx]).convert("L"), dtype=np.float32)
 
         if self.transform:
             transformation = self.transform(image=image, mask=mask)
@@ -117,7 +116,6 @@ class CityScapesDataset(Dataset):
 
         image = np.array(image.convert("RGB"))
         target = np.array(target.convert("L"), dtype=np.float32)
-        # target = cityscapes_labels_map(target)
 
         if self.transform:
             transformation = self.transform(image=image, mask=target)
